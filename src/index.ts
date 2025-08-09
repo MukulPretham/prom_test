@@ -35,6 +35,10 @@ app.get("/cpu", requestCountMiddleware,activeReqMiddleware, async (req, res) => 
     res.json({})
 })
 
+app.get("/test", requestCountMiddleware,activeReqMiddleware, async (req, res) => {
+    res.json({})
+})
+
 app.listen(3000, () => {
     console.log(("server is runnig at prort 3000"))
 })
