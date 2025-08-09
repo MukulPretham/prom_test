@@ -13,84 +13,32 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const prom_client_1 = __importDefault(require("prom-client"));
+const middleware_1 = require("./middleware");
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
-// counter metric
-// Each metric is a object
-const reqCounter = new prom_client_1.default.Counter({
-    name: "http_request_total",
-    help: "total number of request",
-    labelNames: ["method", "route", "status_code"]
-});
-const activeRequest = new prom_client_1.default.Gauge({
-    name: "Active_request",
-    help: "number of active requets",
-    labelNames: ["endpoint"]
-});
-const responseTimeHisto = new prom_client_1.default.Histogram({
-    name: "resposne_histogram",
-    help: "hiogram for response time",
-    labelNames: ["method", "route", "status_code"],
-    buckets: [0.5, 1, 2, 3, 5, 6, 8]
-});
-const requestCountMiddleware = (req, res, next) => {
-    const startTime = Date.now();
-    res.on("finish", () => {
-        const endTime = Date.now();
-        const obj = {
-            method: req.method,
-            route: req.url.split("/")[req.url.split("/").length - 1],
-            status_code: res.statusCode
-        };
-        reqCounter.inc();
-        reqCounter.inc(obj); //This is stored in our app memory, for now
-        responseTimeHisto.observe({
-            method: req.method,
-            route: req.url.split("/")[req.url.split("/").length - 1],
-            status_code: res.statusCode
-        }, endTime - startTime);
-        console.log(obj);
-        console.log(`request took ${endTime - startTime} ms`);
-    });
-    next();
-};
-const activeReqMiddleware = (req, res, next) => {
-    activeRequest.inc();
-    activeRequest.inc({
-        endpoint: req.url.split("/")[req.url.split("/").length - 1]
-    });
-    res.on("finish", () => {
-        activeRequest.dec({
-            endpoint: req.url.split("/")[req.url.split("/").length - 1]
-        });
-        activeRequest.dec();
-    });
-    next();
-};
-app.get("/metrics", requestCountMiddleware, (req, res) => {
+app.get("/metrics", middleware_1.requestCountMiddleware, (req, res) => {
     res.status(200).json({
         message: req.url.split("/")[1]
     });
 });
-app.get("/metrics2", requestCountMiddleware, (req, res) => {
+app.get("/metrics2", middleware_1.requestCountMiddleware, (req, res) => {
     res.status(200).json({
         message: req.url.split("/")[1]
     });
 });
 app.get("/counter", (rrq, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const data = yield reqCounter.get();
+    const data = yield middleware_1.reqCounter.get();
     res.json(data);
 }));
 app.get("/gauge", (rrq, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const data = yield activeRequest.get();
+    const data = yield middleware_1.activeRequest.get();
     res.json(data);
 }));
 app.get("/histo", (rrq, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const data = yield responseTimeHisto.get();
+    const data = yield middleware_1.responseTimeHisto.get();
     res.json(data);
 }));
-app.get("/cpu", activeReqMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.get("/cpu", middleware_1.activeReqMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     yield new Promise((resolve, reject) => {
         setTimeout(() => {
             resolve("done");
