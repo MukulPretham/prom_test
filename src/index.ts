@@ -6,21 +6,10 @@ const app = express()
 
 app.use(express.json())
 
-app.get("/metrics", requestCountMiddleware, (req, res) => {
-
-    res.status(200).json({
-        message: req.url.split("/")[1]
-    });
-
-})
-
-app.get("/metrics2", requestCountMiddleware, (req, res) => {
-
-    res.status(200).json({
-        message: req.url.split("/")[1]
-    });
-
-})
+app.get('/metrics', async (req, res) => {
+    res.set('Content-Type', promClient.register.contentType);
+    res.end(await promClient.register.metrics());
+  });
 
 app.get("/counter", async (rrq, res) => {
     const data = await reqCounter.get()
@@ -37,7 +26,7 @@ app.get("/histo", async (rrq, res) => {
     res.json(data)
 })
 
-app.get("/cpu", activeReqMiddleware, async (req, res) => {
+app.get("/cpu", requestCountMiddleware,activeReqMiddleware, async (req, res) => {
     await new Promise((resolve, reject) => {
         setTimeout(() => {
             resolve("done");

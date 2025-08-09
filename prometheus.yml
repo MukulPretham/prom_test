@@ -1,0 +1,6 @@
+global:
+  scrape_interval: 15s
+scrape_configs:
+  - job_name: "nodejs_app"
+    static_configs:
+      - targets: ["prom_test:3000"]
