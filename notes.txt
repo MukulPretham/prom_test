@@ -1,0 +1,5 @@
+types of metrics
+- Couter: a metric is which increases overtime eg- request
+    <metric_name>{label1="value1", label2="value2", ...} → [(timestamp1, value1), (timestamp2, value2), ...]
+- Gauge: a metric which increase and decrease  eg- cpu usage, memory usage
+- Histogram: ...
